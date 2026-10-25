@@ -45,6 +45,13 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon testReleaseUnitTest assembleRelease
       - name: The launcher stays small
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: glass-tv-release-apk
+          path: launcher/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+
         run: |
           size=$(stat -c %s launcher/app/build/outputs/apk/release/app-release.apk)
           echo "release APK: $((size / 1024)) KB"
