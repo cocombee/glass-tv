@@ -31,6 +31,14 @@ is ignored, and a file that doesn't parse is ignored as a whole, so a theme can 
 | `columns` | 1 to 8 | Tiles per row; tiles shrink to fit from 5 up |
 | `rows_below_dock` | 0 to 3 | Grid rows left visible under the dock |
 | `shamsi_date` | bool | Show the Solar Hijri date above the Gregorian one |
+| `hijri_date` | bool | Show the Hijri (Umm al-Qura) date in Arabic above the Gregorian one, which is then in Arabic too |
+| `clock_right` | bool | Clock and dates at the top right, the Inputs / Wi-Fi / Settings buttons at the top left |
+| `arabic_digits` | bool | Clock and dates in Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩), AM/PM as ص/م |
+| `place_text` | bool | The place's name, country and description above the dock; `false` shows the picture alone |
+| `prayer_times` | bool | The next prayer and the time left, in Arabic, under the dates and on the screensaver. Umm al-Qura method, worked out on the TV (no network) |
+| `prayer_latitude`, `prayer_longitude`, `prayer_timezone` | number, number, string | Where prayer times are for; Riyadh (`24.7136`, `46.6753`, `Asia/Riyadh`) by default |
+| `football_team` | string | ESPN team id whose next match is shown under the dates and on the screensaver, e.g. `"359"` for Arsenal. Goes online every 6 hours (ESPN's public schedule feed) |
+| `football_team_name` | string | The team's name as shown, e.g. `"أرسنال"`; ESPN's name otherwise |
 | `module_cards` | bool | Look for module cards and ask about them (`true`); `false` turns the feature off |
 | `reduced_motion` | bool | Calmer motion for weak GPUs: stiff highlight spring, no tile overshoot, short fades, no entrance replay |
 | `vpn_app` | string | App the network pill opens when a VPN is configured; also shows a red "VPN off" badge while no VPN is up |

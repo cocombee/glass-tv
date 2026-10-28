@@ -56,5 +56,73 @@
             android:letterSpacing="0.14"
             android:textAllCaps="true"
             android:includeFontPadding="false" />
+
+        <!-- With hijri_date: the Hijri and Gregorian dates in Arabic, in place of the date above. -->
+        <TextView
+            android:id="@+id/dreamArabicDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:textColor="#FF8B8C90"
+            android:textSize="17sp"
+            android:lineSpacingExtra="6dp"
+            android:includeFontPadding="false"
+            android:visibility="gone" />
+
+        <!-- The next prayer and the team's next match, as on Home (prayer_times, football_team). -->
+        <TextView
+            android:id="@+id/dreamPrayer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:textColor="#FFB5B6B8"
+            android:textSize="17sp"
+            android:includeFontPadding="false"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/dreamMatch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/matchInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:textColor="#FF8B8C90"
+                android:textSize="15sp"
+                android:includeFontPadding="false" />
+
+            <ImageView
+                android:id="@+id/matchOppLogo"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_marginStart="12dp"
+                android:scaleType="fitCenter"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:id="@+id/matchTeams"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:singleLine="true"
+                android:textColor="#FFB5B6B8"
+                android:textSize="16sp"
+                android:includeFontPadding="false" />
+
+            <ImageView
+                android:id="@+id/matchTeamLogo"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:scaleType="fitCenter"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
     </LinearLayout>
 </FrameLayout>

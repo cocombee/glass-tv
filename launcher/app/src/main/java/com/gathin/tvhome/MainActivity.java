@@ -49,6 +49,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -129,6 +130,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private TextView btnWifi;
     private TextView shamsiDate;
     private boolean shamsi;
+    private TextView hijriDate, dateArabic;
+    private boolean hijri, arabicDigits, clockRight;
+    private TextView prayerLine;
+    private View matchLine;
+    private View infoStack;
+    private Config infoCfg;
+    private boolean footballRefreshRunning;
     private String vpnApp;
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
@@ -233,6 +241,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             updateShamsiDate();
             updateWifiLabel();
             refreshPlacesIfDue();
+            refreshFootballIfDue();
             handler.postDelayed(this, MINUTE_MS);
         }
     };
@@ -299,9 +308,50 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             date.setTextSize(11f);
             date.setPadding(0, (int) (4 * density), 0, 0);
         }
+        hijri = cfg.hijriDate;
+        arabicDigits = cfg.arabicDigits;
+        clockRight = cfg.clockRight;
+        hijriDate = findViewById(R.id.hijriDate);
+        dateArabic = findViewById(R.id.dateArabic);
+        if (hijri) {
+            // Both calendars in Arabic: the Gregorian line leaves the TextClock, which names the month in
+            // the TV's own language.
+            hijriDate.setVisibility(View.VISIBLE);
+            dateArabic.setVisibility(View.VISIBLE);
+            findViewById(R.id.date).setVisibility(View.GONE);
+        }
+        if (arabicDigits) {
+            for (int id : new int[]{R.id.clock, R.id.ampm, R.id.date}) {
+                ((TextView) findViewById(id)).setTransformationMethod(Hijri.DIGITS);
+            }
+        }
+        infoCfg = cfg;
+        prayerLine = findViewById(R.id.prayerLine);
+        matchLine = findViewById(R.id.matchLine);
+        infoStack = findViewById(R.id.infoStack);
+        // Each line on its own pill of the same glass as the top bar's: what is behind it, softened,
+        // with a shining edge.
+        prayerLine.setBackground(new GlassDrawable(prayerLine, 23 * density, density, null));
+        matchLine.setBackground(new GlassDrawable(matchLine, 25 * density, density, null));
+        for (View pill : new View[]{prayerLine, matchLine}) {
+            Backdrop.watch(pill);
+        }
+        if (!cfg.placeText) heroShelf.setVisibility(View.GONE);
+        if (clockRight) placeClockRight();
+        if (hijri && !android.text.format.DateFormat.is24HourFormat(this)) {
+            // Two date lines reach up beside AM/PM: keep them clear of it, on its side.
+            TextView amPmView = findViewById(R.id.ampm);
+            float widest = 0;
+            for (String s : new String[]{"ص", "م", "AM", "PM"}) widest = Math.max(widest, amPmView.getPaint().measureText(s));
+            int clear = (int) (widest + 6 * density);
+            View dates = findViewById(R.id.dateBlock);
+            if (clockRight) dates.setPadding(0, 0, clear, 0);
+            else dates.setPadding(clear, 0, 0, 0);
+        }
         // Beside the clock, the date sits on the digits' baseline, and AM/PM rests halfway between
         // the top of the digits and the top of the date, its letters' foot on that line.
-        TextView clock = findViewById(R.id.clock), amPm = findViewById(R.id.ampm), dateLine = findViewById(R.id.date);
+        TextView clock = findViewById(R.id.clock), amPm = findViewById(R.id.ampm),
+                dateLine = findViewById(hijri ? R.id.dateArabic : R.id.date);
         View dateBlock = findViewById(R.id.dateBlock);
         dateBlock.setTranslationY(dateLine.getPaint().getFontMetrics().descent - clock.getPaint().getFontMetrics().descent);
         // Placed once the whole column is laid out, AM/PM and the date both.
@@ -671,6 +721,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         updateShamsiDate();
         updateWifiLabel();
         updateInputsButton();
+        refreshFootballIfDue();
         startWallpaperRotation();
         handler.postDelayed(minuteTick, MINUTE_MS);
         handler.removeCallbacks(cacheClean);
@@ -874,6 +925,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     // ---- top shelf -------------------------------------------------------------------------------
 
     private void showHero(int position, float dockTopInRoot) {
+        showInfo(true);
         // The place the picture is of, when there is one; the app's own name is the fallback for
         // the user's own wallpapers, which carry no title.
         final String label = placeName != null ? placeName : adapter.labelAt(position);
@@ -934,10 +986,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // its views and rectangles rather than looking them up or allocating each time.
         if (topRow == null) {
             topRow = findViewById(R.id.topButtons);
-            topSettings = findViewById(R.id.btnSettings);
+            // With clock_right the row sits at the left: its first button lines up with the first dock card.
+            topSettings = findViewById(clockRight ? R.id.btnInputs : R.id.btnSettings);
         }
         if (topRow == null || topSettings.getWidth() == 0) return;
-        RecyclerView.ViewHolder last = grid.findViewHolderForAdapterPosition(COLUMNS - 1);
+        RecyclerView.ViewHolder last = grid.findViewHolderForAdapterPosition(clockRight ? 0 : COLUMNS - 1);
         if (last == null) return;
         View card = last.itemView.findViewById(R.id.card);
         if (card == null || card.getWidth() == 0) return;
@@ -947,7 +1000,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         root.offsetDescendantRectToMyCoords(card, alignCard);
         alignButton.set(0, 0, topSettings.getWidth(), topSettings.getHeight());
         root.offsetDescendantRectToMyCoords(topSettings, alignButton);
-        float shift = alignCard.right - alignButton.right;
+        float shift = clockRight ? alignCard.left - alignButton.left : alignCard.right - alignButton.right;
         if (Math.abs(topRow.getTranslationX() - shift) >= 1f) topRow.setTranslationX(shift);
     }
 
@@ -1220,7 +1273,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 .setUpdateListener(a -> syncGlassGlow()).start();
     }
 
+    /** The prayer and match pills go with the shelf: there on the dock, faded out over the grid below it. */
+    private void showInfo(boolean show) {
+        if (infoStack == null) return;
+        float to = show ? 1f : 0f;
+        if (infoStack.getAlpha() == to) return;
+        infoStack.animate().cancel();
+        infoStack.animate().alpha(to).setDuration(reducedMotion ? 100 : show ? 260 : 160).start();
+    }
+
     private void hideShelf() {
+        showInfo(false);
         if (!heroShown) return;
         heroShown = false;
         heroShelf.animate().alpha(0f).setDuration(reducedMotion ? 100 : 160).start();
@@ -1460,6 +1523,66 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void updateShamsiDate() {
         if (shamsi) shamsiDate.setText(Shamsi.today());
+        if (hijri) {
+            hijriDate.setText(Hijri.today(arabicDigits));
+            dateArabic.setText(Hijri.gregorian(arabicDigits));
+        }
+        updateInfoLines();
+    }
+
+    /** The next prayer and the next match under the dates; each line hides while it has nothing to say. */
+    private void updateInfoLines() {
+        if (infoCfg == null) return;
+        long now = System.currentTimeMillis();
+        setLine(prayerLine, InfoLines.prayer(this, infoCfg, now));
+        InfoLines.bindMatch(matchLine, this, infoCfg, now);
+    }
+
+    private static void setLine(TextView line, String text) {
+        line.setText(text);
+        line.setVisibility(text.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    private void refreshFootballIfDue() {
+        if (infoCfg == null || footballRefreshRunning || !Football.due(this, infoCfg.footballTeam)) return;
+        footballRefreshRunning = true;
+        String team = infoCfg.footballTeam;
+        new Thread(() -> {
+            boolean changed = Football.refresh(getApplicationContext(), team);
+            handler.post(() -> {
+                footballRefreshRunning = false;
+                if (changed && !isDestroyed()) updateInfoLines();
+            });
+        }).start();
+    }
+
+    /**
+     * clock_right: the clock and its dates at the top right, the time against the right edge and the
+     * dates right-aligned to its left, and the buttons at the top left.
+     */
+    private void placeClockRight() {
+        View clockBlock = findViewById(R.id.leftBlock);
+        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) clockBlock.getLayoutParams();
+        lp.removeRule(RelativeLayout.ALIGN_PARENT_START);
+        lp.removeRule(RelativeLayout.START_OF);
+        lp.addRule(RelativeLayout.ALIGN_PARENT_END);
+        lp.addRule(RelativeLayout.END_OF, R.id.topButtons);
+        lp.setMarginEnd(0);
+        lp.setMarginStart((int) (16 * density));
+        RelativeLayout.LayoutParams bp = (RelativeLayout.LayoutParams) findViewById(R.id.topButtons).getLayoutParams();
+        bp.removeRule(RelativeLayout.ALIGN_PARENT_END);
+        bp.addRule(RelativeLayout.ALIGN_PARENT_START);
+        TextView clock = findViewById(R.id.clock);
+        LinearLayout row = (LinearLayout) clock.getParent();
+        row.removeView(clock);
+        row.addView(clock);
+        LinearLayout.LayoutParams dates = (LinearLayout.LayoutParams) row.getChildAt(0).getLayoutParams();
+        dates.setMarginStart(0);
+        dates.setMarginEnd((int) (8 * density));
+        ((FrameLayout.LayoutParams) findViewById(R.id.ampm).getLayoutParams()).gravity = Gravity.TOP | Gravity.RIGHT;
+        for (int id : new int[]{R.id.shamsiDate, R.id.hijriDate, R.id.dateArabic, R.id.date}) {
+            ((TextView) findViewById(id)).setGravity(Gravity.RIGHT);
+        }
     }
 
     /** Shows the Wi-Fi network name on the button when we can read it, otherwise the connection type. */

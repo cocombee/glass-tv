@@ -43,6 +43,23 @@ final class Config {
     final int columns;
     final int rowsBelowDock;
     final boolean shamsiDate;
+    /** The Hijri (Umm al-Qura) date in Arabic above the Gregorian one, which is then in Arabic too (hijri_date). */
+    final boolean hijriDate;
+    /** The clock and dates at the top right, the buttons at the top left (clock_right). */
+    final boolean clockRight;
+    /** The clock and dates in Arabic-Indic digits, ٠١٢٣٤٥٦٧٨٩ (arabic_digits). */
+    final boolean arabicDigits;
+    /** The place's name, country and description above the dock (place_text); false shows the picture alone. */
+    final boolean placeText;
+    /** The next prayer and the time left until it, under the dates and on the screensaver (prayer_times). */
+    final boolean prayerTimes;
+    /** Where prayer times are worked out for: prayer_latitude, prayer_longitude, prayer_timezone; Riyadh by default. */
+    final double prayerLatitude, prayerLongitude;
+    final String prayerTimezone;
+    /** ESPN team id whose next match is shown (football_team, e.g. "359" for Arsenal); empty for none. */
+    final String footballTeam;
+    /** The team's name as shown (football_team_name, e.g. "أرسنال"); empty uses the feed's. */
+    final String footballTeamName;
     final boolean moduleCards;
     /** Calmer motion for weak GPUs (config.xml, reduced_motion): stiff spring, short fades, no replay. */
     final boolean reducedMotion;
@@ -70,7 +87,10 @@ final class Config {
     private Config(List<String> dockApps, List<String> hiddenApps, String liveTvPackage, String liveTvAction,
                    String sourcePanelService, String sourcePanelAction, String inputAction,
                    int columns, int rowsBelowDock,
-                   boolean shamsiDate, boolean moduleCards, boolean reducedMotion, String vpnApp,
+                   boolean shamsiDate, boolean hijriDate, boolean clockRight, boolean arabicDigits,
+                   boolean placeText, boolean prayerTimes, double prayerLatitude, double prayerLongitude,
+                   String prayerTimezone, String footballTeam, String footballTeamName,
+                   boolean moduleCards, boolean reducedMotion, String vpnApp,
                    boolean showHomeSettingsShortcut, boolean showNetworkPill, boolean showLiveTv,
                    int backgroundColor,
                    File wallpaper, List<File> wallpapers, long wallpaperIntervalMs,
@@ -85,6 +105,16 @@ final class Config {
         this.columns = columns;
         this.rowsBelowDock = rowsBelowDock;
         this.shamsiDate = shamsiDate;
+        this.hijriDate = hijriDate;
+        this.clockRight = clockRight;
+        this.arabicDigits = arabicDigits;
+        this.placeText = placeText;
+        this.prayerTimes = prayerTimes;
+        this.prayerLatitude = prayerLatitude;
+        this.prayerLongitude = prayerLongitude;
+        this.prayerTimezone = prayerTimezone;
+        this.footballTeam = footballTeam;
+        this.footballTeamName = footballTeamName;
         this.moduleCards = moduleCards;
         this.reducedMotion = reducedMotion;
         this.vpnApp = vpnApp;
@@ -117,6 +147,15 @@ final class Config {
         int columns = res.getInteger(R.integer.columns);
         int rowsBelow = res.getInteger(R.integer.rows_below_dock);
         boolean shamsi = res.getBoolean(R.bool.shamsi_date);
+        boolean hijri = res.getBoolean(R.bool.hijri_date);
+        boolean clockRight = res.getBoolean(R.bool.clock_right);
+        boolean arabicDigits = res.getBoolean(R.bool.arabic_digits);
+        boolean placeText = res.getBoolean(R.bool.place_text);
+        boolean prayerTimes = res.getBoolean(R.bool.prayer_times);
+        double prayerLat = 24.7136, prayerLon = 46.6753;   // Riyadh
+        String prayerZone = "Asia/Riyadh";
+        String footballTeam = res.getString(R.string.football_team).trim();
+        String footballTeamName = res.getString(R.string.football_team_name).trim();
         boolean moduleCards = res.getBoolean(R.bool.module_cards);
         boolean reducedMotion = res.getBoolean(R.bool.reduced_motion);
         String vpn = res.getString(R.string.vpn_app).trim();
@@ -141,6 +180,19 @@ final class Config {
             columns = integer(json, "columns", columns, 1, 8);
             rowsBelow = integer(json, "rows_below_dock", rowsBelow, 0, 3);
             shamsi = bool(json, "shamsi_date", shamsi);
+            hijri = bool(json, "hijri_date", hijri);
+            clockRight = bool(json, "clock_right", clockRight);
+            arabicDigits = bool(json, "arabic_digits", arabicDigits);
+            placeText = bool(json, "place_text", placeText);
+            prayerTimes = bool(json, "prayer_times", prayerTimes);
+            prayerLat = number(json, "prayer_latitude", prayerLat, -66, 66);
+            prayerLon = number(json, "prayer_longitude", prayerLon, -180, 180);
+            prayerZone = string(json, "prayer_timezone", prayerZone);
+            // The id may be written as a number or as a string.
+            Object team = json.opt("football_team");
+            if (team instanceof Number) footballTeam = String.valueOf(((Number) team).longValue());
+            else footballTeam = string(json, "football_team", footballTeam);
+            footballTeamName = string(json, "football_team_name", footballTeamName);
             moduleCards = bool(json, "module_cards", moduleCards);
             reducedMotion = bool(json, "reduced_motion", reducedMotion);
             vpn = string(json, "vpn_app", vpn);
@@ -172,7 +224,8 @@ final class Config {
                 : CacheCleaner.DEFAULT_DAYS;
 
         return new Config(dock, hidden, liveTv, liveTvAction, panelService, panelAction, inputAction,
-                Math.max(1, columns), Math.max(0, rowsBelow), shamsi, moduleCards, reducedMotion,
+                Math.max(1, columns), Math.max(0, rowsBelow), shamsi, hijri, clockRight, arabicDigits,
+                placeText, prayerTimes, prayerLat, prayerLon, prayerZone, footballTeam, footballTeamName, moduleCards, reducedMotion,
                 vpn, homeSettings, networkPill, liveTvRow, background, wallpaper, wallpapers, wallpaperIntervalMs,
                 places, cacheCleanDays, applied);
     }
@@ -212,6 +265,13 @@ final class Config {
         if (!(v instanceof Number)) return fallback;
         int i = ((Number) v).intValue();
         return i < min || i > max ? fallback : i;
+    }
+
+    private static double number(JSONObject o, String key, double fallback, double min, double max) {
+        Object v = o.opt(key);
+        if (!(v instanceof Number)) return fallback;
+        double d = ((Number) v).doubleValue();
+        return d < min || d > max ? fallback : d;
     }
 
     private static int color(JSONObject o, String key, int fallback) {

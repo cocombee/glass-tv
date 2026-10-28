@@ -51,6 +51,24 @@
     <!-- Show the Solar Hijri (Shamsi) date used in Iran and Afghanistan, e.g. "27 Mehr 1405", above the
          Gregorian date. -->
     <bool name="shamsi_date">false</bool>
+    <!-- Show the Hijri (Umm al-Qura) date in Arabic, e.g. "٧ جمادى الأولى ١٤٤٨ هـ", above the Gregorian date,
+         which is then shown in Arabic too. -->
+    <bool name="hijri_date">false</bool>
+    <!-- Put the clock and dates at the top right, and the Inputs / Wi-Fi / Settings buttons at the top left. -->
+    <bool name="clock_right">false</bool>
+    <!-- Show the clock and dates in Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩), and AM/PM as ص/م. -->
+    <bool name="arabic_digits">false</bool>
+    <!-- The place's name, country and description above the dock. false shows the picture alone. -->
+    <bool name="place_text">true</bool>
+    <!-- The next prayer and the time left, under the dates and on the screensaver (Umm al-Qura method, worked
+         out on the TV). The place is Riyadh unless a theme sets prayer_latitude, prayer_longitude and
+         prayer_timezone. -->
+    <bool name="prayer_times">false</bool>
+    <!-- ESPN team id whose next match is shown under the dates and on the screensaver, e.g. 359 for Arsenal.
+         Empty: none. This is the only feature besides places that goes online (every 6 hours). -->
+    <string name="football_team" translatable="false"></string>
+    <!-- The team's name as shown, e.g. أرسنال. Empty: the name ESPN gives. -->
+    <string name="football_team_name" translatable="false"></string>
     <!-- Optional VPN app the network pill opens (hold the pill for Wi-Fi settings), e.g. the package of the
          VPN you use. Empty: the pill opens Wi-Fi settings. The green VPN badge shows for any VPN either way;
          with an app set here, a red "VPN off" badge also shows while no VPN is up. -->

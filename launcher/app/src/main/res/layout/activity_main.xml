@@ -69,6 +69,80 @@
             android:visibility="gone" />
     </LinearLayout>
 
+    <!-- The next prayer (prayer_times) and the team's next match (football_team), each on a glass pill
+         (set in code), one above the other at the right, just above the dock, their right edges on the
+         dock's. -->
+    <LinearLayout
+        android:id="@+id/infoStack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="56dp"
+        android:layout_marginBottom="178dp"
+        android:gravity="end"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/prayerLine"
+            android:layout_width="wrap_content"
+            android:layout_height="46dp"
+            android:gravity="center"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:singleLine="true"
+            android:textColor="#F2FFFFFF"
+            android:textSize="18sp"
+            android:includeFontPadding="false"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/matchLine"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:layout_marginTop="14dp"
+            android:paddingStart="22dp"
+            android:paddingEnd="18dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/matchInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:textColor="#D9FFFFFF"
+                android:textSize="15sp"
+                android:includeFontPadding="false" />
+
+            <ImageView
+                android:id="@+id/matchOppLogo"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginStart="12dp"
+                android:scaleType="fitCenter"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:id="@+id/matchTeams"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:singleLine="true"
+                android:textColor="#F2FFFFFF"
+                android:textSize="17sp"
+                android:includeFontPadding="false" />
+
+            <ImageView
+                android:id="@+id/matchTeamLogo"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:scaleType="fitCenter"
+                android:importantForAccessibility="no" />
+        </LinearLayout>
+    </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -161,6 +235,33 @@
                                 android:includeFontPadding="false"
                                 android:visibility="gone" />
 
+                            <!-- Hijri date in Arabic ("٧ جمادى الأولى ١٤٤٨ هـ"), shown when hijri_date is on. -->
+                            <TextView
+                                android:id="@+id/hijriDate"
+                                android:gravity="left"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:singleLine="true"
+                                android:ellipsize="end"
+                                android:textColor="#E6FFFFFF"
+                                android:textSize="19sp"
+                                android:includeFontPadding="false"
+                                android:visibility="gone" />
+
+                            <!-- The Gregorian date in Arabic, in place of the TextClock below when hijri_date is on. -->
+                            <TextView
+                                android:id="@+id/dateArabic"
+                                android:gravity="left"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:singleLine="true"
+                                android:ellipsize="end"
+                                android:textColor="#A6FFFFFF"
+                                android:textSize="15sp"
+                                android:includeFontPadding="false"
+                                android:visibility="gone" />
+
                             <TextClock
                                 android:id="@+id/date"
                                 android:gravity="left"
@@ -180,6 +281,7 @@
                         </LinearLayout>
                     </FrameLayout>
                 </LinearLayout>
+
             </LinearLayout>
 
             <LinearLayout

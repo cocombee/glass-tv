@@ -33,10 +33,12 @@ public class ClockDream extends DreamService {
     private final Random random = new Random();
     private View content;
     private ClockFace face;
+    private Config cfg;
 
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
+            updateLines();
             moveClock();
             handler.postDelayed(this, MOVE_MS);
         }
@@ -59,6 +61,18 @@ public class ClockDream extends DreamService {
         String pattern = DateFormat.getBestDateTimePattern(Locale.getDefault(), "MMMdyyyy");
         date.setFormat12Hour(pattern);
         date.setFormat24Hour(pattern);
+        // The same Arabic dates, digits and lines as Home's top bar, when the theme asks for them.
+        cfg = Config.load(this);
+        if (cfg.arabicDigits) {
+            for (int id : new int[]{R.id.dreamTime, R.id.dreamAmPm, R.id.dreamDate}) {
+                ((TextView) findViewById(id)).setTransformationMethod(Hijri.DIGITS);
+            }
+        }
+        if (cfg.hijriDate) {
+            date.setVisibility(View.GONE);
+            findViewById(R.id.dreamArabicDate).setVisibility(View.VISIBLE);
+        }
+        updateLines();
         View screen = (View) content.getParent();
         screen.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
             if (b - t != ob - ot) size(b - t);
@@ -90,7 +104,25 @@ public class ClockDream extends DreamService {
         // The date's capitals start 16.5 units under the digits' baseline.
         LinearLayout.LayoutParams dateRow = (LinearLayout.LayoutParams) date.getLayoutParams();
         dateRow.topMargin = Math.round(16.5f * u - time.getPaint().getFontMetrics().descent - capInset(date, "O"));
+        ((LinearLayout.LayoutParams) findViewById(R.id.dreamArabicDate).getLayoutParams()).topMargin = dateRow.topMargin;
         content.requestLayout();
+    }
+
+    /** The Arabic dates, the next prayer and the next match; read from the cache, never online. */
+    private void updateLines() {
+        if (cfg == null) return;
+        long now = System.currentTimeMillis();
+        if (cfg.hijriDate) {
+            ((TextView) findViewById(R.id.dreamArabicDate)).setText(
+                    Hijri.today(cfg.arabicDigits) + "\n" + Hijri.gregorian(cfg.arabicDigits));
+        }
+        setLine(findViewById(R.id.dreamPrayer), InfoLines.prayer(this, cfg, now));
+        InfoLines.bindMatch(findViewById(R.id.dreamMatch), this, cfg, now);
+    }
+
+    private static void setLine(TextView line, String text) {
+        line.setText(text);
+        line.setVisibility(text.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
     /** How far below the top of {@code view} the tops of {@code letters} are drawn. */
@@ -104,6 +136,7 @@ public class ClockDream extends DreamService {
     @Override
     public void onDreamingStarted() {
         super.onDreamingStarted();
+        updateLines();
         content.setAlpha(0f);
         content.post(() -> {
             placeClock();
