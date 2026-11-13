@@ -94,7 +94,7 @@ function Restore-Tv {
 function Test-Healthy([string]$Stage) {
     if ($env:SAFEGUARD_TEST -eq $Stage) { return $false }
     # Sent on stdin: Windows PowerShell 5.1 drops the inner double quotes from native arguments (#4).
-    $s = "$('sleep 4; a=$(pidof com.gathin.tvhome); sleep 3; b=$(pidof com.gathin.tvhome); f=$(dumpsys window 2>/dev/null | grep -m1 mCurrentFocus); echo "$a|$b|$f"' | & $py -I ..\tools\tv.py --batch | Select-Object -Last 1)".Trim()
+    $s = "$('sleep 4; a=$(pidof com.gathin.tvhome); sleep 3; b=$(pidof com.gathin.tvhome); f=$(dumpsys window windows 2>/dev/null | grep -m1 mCurrentFocus); echo "$a|$b|$f"' | & $py -I ..\tools\tv.py --batch | Select-Object -Last 1)".Trim()
     $p = $s.Split('|', 3)
     return ($p.Count -eq 3 -and $p[0] -and $p[0] -eq $p[1] -and $p[2] -like '*com.gathin.tvhome*')
 }
