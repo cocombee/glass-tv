@@ -20,7 +20,7 @@ DIR=/sdcard/Android/data/$PKG/files
 tv() { "$PY" -I tv.py "$@"; }
 
 if [ "${1:-}" = --reset ]; then
-  tv "rm -rf $DIR/config.json $DIR/wallpaper.jpg $DIR/wallpapers; am force-stop $PKG; am start -n $PKG/.MainActivity >/dev/null; echo reset" | tail -n 1
+  tv "rm -rf $DIR/config.json $DIR/wallpaper.jpg $DIR/wallpapers $DIR/quotes.txt; am force-stop $PKG; am start -n $PKG/.MainActivity >/dev/null; echo reset" | tail -n 1
   exit 0
 fi
 THEME="${THEME_ARG:?usage: theme.sh <theme folder> | --reset}"
@@ -34,6 +34,12 @@ if [ -f "$THEME/wallpaper.jpg" ]; then
   "$PY" -I b64push.py "$THEME/wallpaper.jpg" "$DIR/wallpaper.jpg"
 else
   tv "rm -f $DIR/wallpaper.jpg" >/dev/null
+fi
+# quotes.txt: quotes above the dock instead of the place's words (one per line, "text | source").
+if [ -f "$THEME/quotes.txt" ]; then
+  "$PY" -I b64push.py "$THEME/quotes.txt" "$DIR/quotes.txt" | tail -n 1
+else
+  tv "rm -f $DIR/quotes.txt" >/dev/null
 fi
 # A wallpapers/ folder is a rotation: the launcher shows one picture after another (wallpaper_minutes).
 tv "rm -rf $DIR/wallpapers" >/dev/null
