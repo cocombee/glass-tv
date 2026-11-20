@@ -129,6 +129,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private TextView btnWifi;
     private TextView shamsiDate;
     private boolean shamsi;
+    private TextView prayerLine;
+    private java.util.List<String[]> quotes = java.util.Collections.emptyList();
+    private long quoteIntervalMs;
+    private int quoteIndex = -1;
+    private Config prayerCfg;
     private String vpnApp;
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
@@ -231,6 +236,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         @Override
         public void run() {
             updateShamsiDate();
+            updatePrayerTimes();
+            updateQuote();
             updateWifiLabel();
             refreshPlacesIfDue();
             handler.postDelayed(this, MINUTE_MS);
@@ -273,6 +280,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         ambient = findViewById(R.id.ambient);
         Backdrop.setWorker(wallDecoder, handler);
         heroShelf = findViewById(R.id.heroShelf);
+        // Quotes take the shelf over from the place's words. With neither, show_place_info off leaves the
+        // picture alone; every fade below then runs on a view that is never drawn.
+        quotes = cfg.quotes;
+        quoteIntervalMs = cfg.quoteIntervalMs;
+        if (quotes.isEmpty() && !cfg.showPlaceInfo) heroShelf.setVisibility(View.GONE);
         heroName = findViewById(R.id.heroName);
         heroDesc = findViewById(R.id.heroDesc);
         heroWhere = findViewById(R.id.heroWhere);
@@ -291,6 +303,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
         btnWifi = findViewById(R.id.btnWifi);
         if (!cfg.showNetworkPill) btnWifi.setVisibility(View.GONE);
+        prayerLine = findViewById(R.id.prayerTimes);
+        if (cfg.prayerTimes) {
+            prayerCfg = cfg;
+            prayerLine.setVisibility(View.VISIBLE);
+        }
         shamsiDate = findViewById(R.id.shamsiDate);
         shamsi = cfg.shamsiDate;
         if (shamsi) {
@@ -669,6 +686,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         resuming = true;
         reloadApps(true);
         updateShamsiDate();
+        updatePrayerTimes();
         updateWifiLabel();
         updateInputsButton();
         startWallpaperRotation();
@@ -876,9 +894,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void showHero(int position, float dockTopInRoot) {
         // The place the picture is of, when there is one; the app's own name is the fallback for
         // the user's own wallpapers, which carry no title.
-        final String label = placeName != null ? placeName : adapter.labelAt(position);
-        final String desc = placeName != null ? placeText : "";
-        final String where = placeName != null ? placeCountry : "";
+        String[] quote = currentQuote();
+        final String label = quote != null ? quote[0] : placeName != null ? placeName : adapter.labelAt(position);
+        final String desc = quote != null ? "" : placeName != null ? placeText : "";
+        final String where = quote != null ? quote[1] : placeName != null ? placeCountry : "";
         int color = adapter.ambientColorAt(position);
         heroBottom = dockTopInRoot - HERO_GAP_DP * density;
         float y = heroBottom - heroShelf.getHeight();
@@ -985,6 +1004,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** The shelf's two lines. An empty description takes no room, so the title keeps its place. */
     private void setHeroText(String title, String where, String desc) {
+        if (!quotes.isEmpty()) {
+            // A quote: up to three lines in the title's place, its source on the line under it.
+            heroName.setSingleLine(false);
+            heroName.setMaxLines(3);
+            heroName.setMaxWidth(heroMaxWidth);
+            heroName.setLineSpacing(0f, 1.05f);
+            heroName.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 30f);
+            heroName.setText(title);
+            heroWhere.setText(where);
+            heroWhere.setVisibility(where.isEmpty() ? View.GONE : View.VISIBLE);
+            ViewGroup.MarginLayoutParams whereLp = (ViewGroup.MarginLayoutParams) heroWhere.getLayoutParams();
+            int gap = Math.round(10 * density);
+            if (whereLp.topMargin != gap) {
+                whereLp.topMargin = gap;
+                heroWhere.setLayoutParams(whereLp);
+            }
+            heroDesc.setVisibility(View.GONE);
+            return;
+        }
         heroName.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, titleSizeSp(title));
         heroName.setText(title);
         heroWhere.setText(where);
@@ -1050,6 +1088,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         placeName = title;
         placeText = overview;
         placeCountry = country;
+        if (!quotes.isEmpty()) return;   // the quotes keep the shelf; the place only changes the picture
         // When the shelf is up, the words fade out with the old picture and back in with the new
         // one, inside the picture's own cross-fade: swapped at once, the next place's name sat over
         // the last one's picture while it faded. The layout listener puts the shelf back where it
@@ -1460,6 +1499,64 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void updateShamsiDate() {
         if (shamsi) shamsiDate.setText(Shamsi.today());
+    }
+
+    /** The quote for this stretch of time: the same on every Home start, the next after quote_minutes. */
+    private String[] currentQuote() {
+        if (quotes.isEmpty()) return null;
+        long slot = System.currentTimeMillis() / Math.max(60_000L, quoteIntervalMs);
+        return quotes.get((int) (slot % quotes.size()));
+    }
+
+    /** Swaps the shelf to the next quote when its time is up, fading like a new place does. */
+    private void updateQuote() {
+        if (quotes.isEmpty()) return;
+        int index = (int) ((System.currentTimeMillis() / Math.max(60_000L, quoteIntervalMs)) % quotes.size());
+        if (index == quoteIndex) return;
+        boolean first = quoteIndex < 0;
+        quoteIndex = index;
+        if (first || !heroShown) return;   // showHero picks the current quote up when the shelf next shows
+        String[] q = quotes.get(index);
+        heroShelf.animate().cancel();
+        heroShelf.animate().alpha(0f).setDuration(reducedMotion ? 100 : 250).withEndAction(() -> {
+            setHeroText(q[0], q[1], "");
+            if (heroShown) heroShelf.animate().alpha(1f).setDuration(reducedMotion ? 120 : 400).start();
+        }).start();
+    }
+
+    /** Today's five prayer times, the next one bright; after Isyak, tomorrow's with Subuh bright. */
+    private void updatePrayerTimes() {
+        if (prayerCfg == null) return;
+        java.util.TimeZone zone = java.util.TimeZone.getDefault();
+        java.util.Calendar c = java.util.Calendar.getInstance(zone);
+        long now = c.getTimeInMillis();
+        long[] times = prayerTimesFor(c, zone);
+        int next = PrayerTimes.next(times, now);
+        if (next < 0) {
+            c.add(java.util.Calendar.DAY_OF_MONTH, 1);
+            times = prayerTimesFor(c, zone);
+            next = 0;
+        }
+        java.text.DateFormat fmt = new java.text.SimpleDateFormat(
+                android.text.format.DateFormat.is24HourFormat(this) ? "H:mm" : "h:mm", java.util.Locale.ROOT);
+        fmt.setTimeZone(zone);
+        android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder();
+        for (int i = 0; i < times.length; i++) {
+            if (i > 0) sb.append("   ");
+            int start = sb.length();
+            sb.append(PrayerTimes.NAMES[i]).append(' ').append(fmt.format(new java.util.Date(times[i])));
+            if (i == next) {
+                sb.setSpan(new android.text.style.ForegroundColorSpan(0xFFFFFFFF), start, sb.length(),
+                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+        prayerLine.setText(sb);
+    }
+
+    private long[] prayerTimesFor(java.util.Calendar day, java.util.TimeZone zone) {
+        return PrayerTimes.forDay(day.get(java.util.Calendar.YEAR), day.get(java.util.Calendar.MONTH) + 1,
+                day.get(java.util.Calendar.DAY_OF_MONTH), prayerCfg.prayerLatitude, prayerCfg.prayerLongitude,
+                prayerCfg.prayerAdjust, zone);
     }
 
     /** Shows the Wi-Fi network name on the button when we can read it, otherwise the connection type. */

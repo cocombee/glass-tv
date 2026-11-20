@@ -43,6 +43,19 @@ is ignored, and a file that doesn't parse is ignored as a whole, so a theme can 
 | `wallpaper_minutes` | 0 to 1440 | Minutes between pictures when the theme has a `wallpapers/` folder; 0 changes only when Home starts. Default 30 |
 | `cache_clean_days` | 0 to 90 | Days between clearing the TV's app caches, which the TV does itself (default 15); `0` turns it off. See [docs/cache-clean.md](../docs/cache-clean.md) |
 | `places` | bool | Pictures of places to visit (Bing's daily images, no key), renewed weekly with last week's deleted, each named with its country and a few lines about it; pictures with people in them are skipped. On by default, and they replace the theme's own pictures. `false`: the theme's own pictures, and the launcher never goes online |
+| `show_place_info` | bool | The place's name, country and description above the dock; `false` shows only the picture. Default `true` |
+| `quote_minutes` | 1 to 1440 | Minutes each quote stays when the theme has a `quotes.txt` (default 10) |
+| `prayer_times` | bool | Today's five prayer times under the clock, the next one brighter, worked out on the TV with JAKIM's parameters (Subuh 18°, Isyak 18°, Shafi'i Asar); needs `prayer_latitude` and `prayer_longitude`. Off by default; never goes online |
+| `prayer_latitude`, `prayer_longitude` | number | Where the prayer times are for, in degrees (north and east positive), e.g. Nilai: `2.8167`, `101.8` |
+| `prayer_adjust` | five numbers, -15 to 15 | Minutes added to Subuh, Zohor, Asar, Maghrib and Isyak, to match a local timetable; e.g. `[1, 0, 0, 0, 0]` matches JAKIM's zone NGS03 (Seremban, Nilai) |
+
+## Quotes
+
+A `quotes.txt` in the theme folder puts quotes above the dock in place of the place's name and description, one after another every `quote_minutes`. One quote per line, its source after a `|`; blank lines and lines starting with `#` are skipped:
+
+```
+Maka sesungguhnya bersama kesulitan ada kemudahan. | Surah Al-Insyirah, 94:5
+```
 
 ## Wallpapers
 

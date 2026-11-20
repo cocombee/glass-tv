@@ -180,6 +180,23 @@
                         </LinearLayout>
                     </FrameLayout>
                 </LinearLayout>
+
+                <!-- Today's prayer times under the clock, the next one brighter; shown when prayer_times is on. -->
+                <TextView
+                    android:id="@+id/prayerTimes"
+                    android:gravity="left"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:textColor="#8CFFFFFF"
+                    android:textSize="15sp"
+                    android:fontFamily="@font/outfit"
+                    android:fontVariationSettings="'wght' 400"
+                    android:letterSpacing="0.04"
+                    android:includeFontPadding="false"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <LinearLayout
