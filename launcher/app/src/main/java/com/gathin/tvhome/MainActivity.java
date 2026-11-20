@@ -129,6 +129,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private TextView btnWifi;
     private TextView shamsiDate;
     private boolean shamsi;
+    private TextView prayerLine;
+    private Config prayerCfg;
     private String vpnApp;
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
@@ -231,6 +233,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         @Override
         public void run() {
             updateShamsiDate();
+            updatePrayerTimes();
             updateWifiLabel();
             refreshPlacesIfDue();
             handler.postDelayed(this, MINUTE_MS);
@@ -291,6 +294,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
         btnWifi = findViewById(R.id.btnWifi);
         if (!cfg.showNetworkPill) btnWifi.setVisibility(View.GONE);
+        prayerLine = findViewById(R.id.prayerTimes);
+        if (cfg.prayerTimes) {
+            prayerCfg = cfg;
+            prayerLine.setVisibility(View.VISIBLE);
+        }
         shamsiDate = findViewById(R.id.shamsiDate);
         shamsi = cfg.shamsiDate;
         if (shamsi) {
@@ -669,6 +677,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         resuming = true;
         reloadApps(true);
         updateShamsiDate();
+        updatePrayerTimes();
         updateWifiLabel();
         updateInputsButton();
         startWallpaperRotation();
@@ -1460,6 +1469,41 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void updateShamsiDate() {
         if (shamsi) shamsiDate.setText(Shamsi.today());
+    }
+
+    /** Today's five prayer times, the next one bright; after Isyak, tomorrow's with Subuh bright. */
+    private void updatePrayerTimes() {
+        if (prayerCfg == null) return;
+        java.util.TimeZone zone = java.util.TimeZone.getDefault();
+        java.util.Calendar c = java.util.Calendar.getInstance(zone);
+        long now = c.getTimeInMillis();
+        long[] times = prayerTimesFor(c, zone);
+        int next = PrayerTimes.next(times, now);
+        if (next < 0) {
+            c.add(java.util.Calendar.DAY_OF_MONTH, 1);
+            times = prayerTimesFor(c, zone);
+            next = 0;
+        }
+        java.text.DateFormat fmt = new java.text.SimpleDateFormat(
+                android.text.format.DateFormat.is24HourFormat(this) ? "H:mm" : "h:mm", java.util.Locale.ROOT);
+        fmt.setTimeZone(zone);
+        android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder();
+        for (int i = 0; i < times.length; i++) {
+            if (i > 0) sb.append("   ");
+            int start = sb.length();
+            sb.append(PrayerTimes.NAMES[i]).append(' ').append(fmt.format(new java.util.Date(times[i])));
+            if (i == next) {
+                sb.setSpan(new android.text.style.ForegroundColorSpan(0xFFFFFFFF), start, sb.length(),
+                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+        prayerLine.setText(sb);
+    }
+
+    private long[] prayerTimesFor(java.util.Calendar day, java.util.TimeZone zone) {
+        return PrayerTimes.forDay(day.get(java.util.Calendar.YEAR), day.get(java.util.Calendar.MONTH) + 1,
+                day.get(java.util.Calendar.DAY_OF_MONTH), prayerCfg.prayerLatitude, prayerCfg.prayerLongitude,
+                prayerCfg.prayerIhtiyati, zone);
     }
 
     /** Shows the Wi-Fi network name on the button when we can read it, otherwise the connection type. */

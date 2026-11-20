@@ -43,6 +43,9 @@ is ignored, and a file that doesn't parse is ignored as a whole, so a theme can 
 | `wallpaper_minutes` | 0 to 1440 | Minutes between pictures when the theme has a `wallpapers/` folder; 0 changes only when Home starts. Default 30 |
 | `cache_clean_days` | 0 to 90 | Days between clearing the TV's app caches, which the TV does itself (default 15); `0` turns it off. See [docs/cache-clean.md](../docs/cache-clean.md) |
 | `places` | bool | Pictures of places to visit (Bing's daily images, no key), renewed weekly with last week's deleted, each named with its country and a few lines about it; pictures with people in them are skipped. On by default, and they replace the theme's own pictures. `false`: the theme's own pictures, and the launcher never goes online |
+| `prayer_times` | bool | Today's five prayer times under the clock, the next one brighter, worked out on the TV with JAKIM's parameters (Subuh 20°, Isyak 18°, Shafi'i Asar); needs `prayer_latitude` and `prayer_longitude`. Off by default; never goes online |
+| `prayer_latitude`, `prayer_longitude` | number | Where the prayer times are for, in degrees (north and east positive), e.g. Nilai: `2.8167`, `101.8` |
+| `prayer_ihtiyati` | 0 to 10 | Minutes added to each prayer time before it is rounded up to the minute. Default 2 |
 
 ## Wallpapers
 

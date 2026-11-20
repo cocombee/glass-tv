@@ -64,6 +64,12 @@ final class Config {
     final boolean places;
     /** Days between clearing the TV's app caches (see CacheCleaner); 0 never does. */
     final int cacheCleanDays;
+    /** Prayer times under the clock (prayer_times, with prayer_latitude and prayer_longitude); see PrayerTimes. */
+    final boolean prayerTimes;
+    final double prayerLatitude;
+    final double prayerLongitude;
+    /** Minutes of ihtiyati added to each prayer time (prayer_ihtiyati, 0 to 10, default 2). */
+    final int prayerIhtiyati;
     /** Whether the overlay file was present and parsed. */
     final boolean overlayApplied;
 
@@ -74,7 +80,9 @@ final class Config {
                    boolean showHomeSettingsShortcut, boolean showNetworkPill, boolean showLiveTv,
                    int backgroundColor,
                    File wallpaper, List<File> wallpapers, long wallpaperIntervalMs,
-                   boolean places, int cacheCleanDays, boolean overlayApplied) {
+                   boolean places, int cacheCleanDays,
+                   boolean prayerTimes, double prayerLatitude, double prayerLongitude, int prayerIhtiyati,
+                   boolean overlayApplied) {
         this.dockApps = Collections.unmodifiableList(dockApps);
         this.hiddenApps = Collections.unmodifiableList(hiddenApps);
         this.liveTvPackage = liveTvPackage;
@@ -97,6 +105,10 @@ final class Config {
         this.wallpaperIntervalMs = wallpaperIntervalMs;
         this.places = places;
         this.cacheCleanDays = cacheCleanDays;
+        this.prayerTimes = prayerTimes;
+        this.prayerLatitude = prayerLatitude;
+        this.prayerLongitude = prayerLongitude;
+        this.prayerIhtiyati = prayerIhtiyati;
         this.overlayApplied = overlayApplied;
     }
 
@@ -170,11 +182,16 @@ final class Config {
         boolean places = wallpaperOn && (json == null || bool(json, "places", true));
         int cacheCleanDays = json != null ? integer(json, "cache_clean_days", CacheCleaner.DEFAULT_DAYS, 0, 90)
                 : CacheCleaner.DEFAULT_DAYS;
+        // Prayer times need a place: off unless the theme turns them on and gives both coordinates.
+        double prayerLat = json != null ? decimal(json, "prayer_latitude", Double.NaN, -66, 66) : Double.NaN;
+        double prayerLng = json != null ? decimal(json, "prayer_longitude", Double.NaN, -180, 180) : Double.NaN;
+        boolean prayer = json != null && bool(json, "prayer_times", false) && !Double.isNaN(prayerLat) && !Double.isNaN(prayerLng);
+        int prayerIhtiyati = json != null ? integer(json, "prayer_ihtiyati", 2, 0, 10) : 2;
 
         return new Config(dock, hidden, liveTv, liveTvAction, panelService, panelAction, inputAction,
                 Math.max(1, columns), Math.max(0, rowsBelow), shamsi, moduleCards, reducedMotion,
                 vpn, homeSettings, networkPill, liveTvRow, background, wallpaper, wallpapers, wallpaperIntervalMs,
-                places, cacheCleanDays, applied);
+                places, cacheCleanDays, prayer, prayerLat, prayerLng, prayerIhtiyati, applied);
     }
 
     /** Reads and parses the overlay; any problem means "no overlay", never a crash on the home screen. */
@@ -212,6 +229,13 @@ final class Config {
         if (!(v instanceof Number)) return fallback;
         int i = ((Number) v).intValue();
         return i < min || i > max ? fallback : i;
+    }
+
+    private static double decimal(JSONObject o, String key, double fallback, double min, double max) {
+        Object v = o.opt(key);
+        if (!(v instanceof Number)) return fallback;
+        double d = ((Number) v).doubleValue();
+        return Double.isNaN(d) || d < min || d > max ? fallback : d;
     }
 
     private static int color(JSONObject o, String key, int fallback) {
