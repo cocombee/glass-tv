@@ -19,19 +19,13 @@ public class PrayerTimesTest {
         return s.toString();
     }
 
-    /** Nilai, Negeri Sembilan, without ihtiyati: matches NOAA's solar calculator rounded up to the minute. */
+    /** Nilai, Negeri Sembilan, 21 Nov 2026: JAKIM's times for zone NGS03 are 05:48 12:59 16:23 18:59 20:12. */
     @Test
-    public void nilaiWithoutIhtiyati() {
-        assertEquals("05:38 12:59 16:22 18:58 20:11",
-                format(PrayerTimes.forDay(2026, 11, 20, 2.8167, 101.8, 0, MY)));
-        assertEquals("05:42 13:15 16:42 19:24 20:39",
-                format(PrayerTimes.forDay(2026, 6, 21, 2.8167, 101.8, 0, MY)));
-    }
-
-    @Test
-    public void ihtiyatiIsAdded() {
-        assertEquals("05:40 13:01 16:24 19:00 20:13",
-                format(PrayerTimes.forDay(2026, 11, 20, 2.8167, 101.8, 2, MY)));
+    public void nilaiMatchesJakim() {
+        assertEquals("05:47 12:59 16:23 18:59 20:12",
+                format(PrayerTimes.forDay(2026, 11, 21, 2.8167, 101.8, null, MY)));
+        assertEquals("05:48 12:59 16:23 18:59 20:12",
+                format(PrayerTimes.forDay(2026, 11, 21, 2.8167, 101.8, new int[]{1, 0, 0, 0, 0}, MY)));
     }
 
     @Test

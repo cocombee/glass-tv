@@ -68,8 +68,8 @@ final class Config {
     final boolean prayerTimes;
     final double prayerLatitude;
     final double prayerLongitude;
-    /** Minutes of ihtiyati added to each prayer time (prayer_ihtiyati, 0 to 10, default 2). */
-    final int prayerIhtiyati;
+    /** Minutes added to each prayer time, Subuh to Isyak (prayer_adjust, five numbers, -15 to 15). */
+    final int[] prayerAdjust;
     /** Whether the overlay file was present and parsed. */
     final boolean overlayApplied;
 
@@ -81,7 +81,7 @@ final class Config {
                    int backgroundColor,
                    File wallpaper, List<File> wallpapers, long wallpaperIntervalMs,
                    boolean places, int cacheCleanDays,
-                   boolean prayerTimes, double prayerLatitude, double prayerLongitude, int prayerIhtiyati,
+                   boolean prayerTimes, double prayerLatitude, double prayerLongitude, int[] prayerAdjust,
                    boolean overlayApplied) {
         this.dockApps = Collections.unmodifiableList(dockApps);
         this.hiddenApps = Collections.unmodifiableList(hiddenApps);
@@ -108,7 +108,7 @@ final class Config {
         this.prayerTimes = prayerTimes;
         this.prayerLatitude = prayerLatitude;
         this.prayerLongitude = prayerLongitude;
-        this.prayerIhtiyati = prayerIhtiyati;
+        this.prayerAdjust = prayerAdjust;
         this.overlayApplied = overlayApplied;
     }
 
@@ -186,12 +186,20 @@ final class Config {
         double prayerLat = json != null ? decimal(json, "prayer_latitude", Double.NaN, -66, 66) : Double.NaN;
         double prayerLng = json != null ? decimal(json, "prayer_longitude", Double.NaN, -180, 180) : Double.NaN;
         boolean prayer = json != null && bool(json, "prayer_times", false) && !Double.isNaN(prayerLat) && !Double.isNaN(prayerLng);
-        int prayerIhtiyati = json != null ? integer(json, "prayer_ihtiyati", 2, 0, 10) : 2;
+        int[] prayerAdjust = new int[5];
+        Object adjust = json != null ? json.opt("prayer_adjust") : null;
+        if (adjust instanceof JSONArray && ((JSONArray) adjust).length() == 5) {
+            for (int i = 0; i < 5; i++) {
+                Object v = ((JSONArray) adjust).opt(i);
+                int m = v instanceof Number ? ((Number) v).intValue() : 0;
+                prayerAdjust[i] = Math.max(-15, Math.min(15, m));
+            }
+        }
 
         return new Config(dock, hidden, liveTv, liveTvAction, panelService, panelAction, inputAction,
                 Math.max(1, columns), Math.max(0, rowsBelow), shamsi, moduleCards, reducedMotion,
                 vpn, homeSettings, networkPill, liveTvRow, background, wallpaper, wallpapers, wallpaperIntervalMs,
-                places, cacheCleanDays, prayer, prayerLat, prayerLng, prayerIhtiyati, applied);
+                places, cacheCleanDays, prayer, prayerLat, prayerLng, prayerAdjust, applied);
     }
 
     /** Reads and parses the overlay; any problem means "no overlay", never a crash on the home screen. */

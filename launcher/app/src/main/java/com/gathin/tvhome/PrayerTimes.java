@@ -5,16 +5,17 @@ import java.util.TimeZone;
 
 /**
  * The five daily prayer times, worked out on the TV from the sun's position, so nothing goes online.
- * Uses JAKIM's (Malaysia) parameters: Subuh at the sun 20 degrees below the horizon, Isyak at 18 degrees,
- * Asar when a shadow is its object's length plus the noon shadow (Shafi'i), Maghrib at sunset; then
- * ihtiyati, a safety margin of a few minutes, is added to each and the time is rounded up to the minute.
+ * Uses JAKIM's (Malaysia) parameters: Subuh at the sun 18 degrees below the horizon, Isyak at 18 degrees,
+ * Asar when a shadow is its object's length plus the noon shadow (Shafi'i), Maghrib at sunset; each time
+ * is rounded up to the minute, after an optional per-prayer adjustment in minutes. Checked against
+ * JAKIM's own times for Nilai (zone NGS03): equal, with Subuh one minute later.
  * The sun's position is the low-precision formula of the US Naval Observatory, good to about a minute.
  */
 final class PrayerTimes {
 
     static final String[] NAMES = {"Subuh", "Zohor", "Asar", "Maghrib", "Isyak"};
 
-    static final double FAJR_ANGLE = 20.0;
+    static final double FAJR_ANGLE = 18.0;
     static final double ISHA_ANGLE = 18.0;
     /** The sun's centre at sunrise and sunset: its radius plus refraction. */
     private static final double SUNSET_ANGLE = 0.8333;
@@ -30,10 +31,11 @@ final class PrayerTimes {
      * @param day       1 to 31
      * @param latitude  degrees, north positive
      * @param longitude degrees, east positive
-     * @param ihtiyatiMinutes minutes added to every time before it is rounded up
+     * @param adjustMinutes minutes added to each time, in the order of {@link #NAMES}, before it is
+     *                      rounded up; null for none
      */
     static long[] forDay(int year, int month, int day, double latitude, double longitude,
-                         int ihtiyatiMinutes, TimeZone zone) {
+                         int[] adjustMinutes, TimeZone zone) {
         Calendar c = Calendar.getInstance(zone);
         c.clear();
         c.set(year, month - 1, day, 0, 0, 0);
@@ -59,7 +61,7 @@ final class PrayerTimes {
         long utMidnight = Math.round((jd0 - 2440587.5) * 86_400_000.0);
         long[] out = new long[5];
         for (int i = 0; i < 5; i++) {
-            long t = utMidnight + Math.round(hours[i] * 3_600_000.0) + ihtiyatiMinutes * 60_000L;
+            long t = utMidnight + Math.round(hours[i] * 3_600_000.0) + (adjustMinutes != null ? adjustMinutes[i] : 0) * 60_000L;
             out[i] = roundUpToMinute(t);
             // A zone far from Greenwich can put a time on the neighbouring UT date; keep it on this day.
             if (out[i] < midnight) out[i] += 86_400_000L;

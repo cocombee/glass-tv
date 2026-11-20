@@ -1503,7 +1503,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private long[] prayerTimesFor(java.util.Calendar day, java.util.TimeZone zone) {
         return PrayerTimes.forDay(day.get(java.util.Calendar.YEAR), day.get(java.util.Calendar.MONTH) + 1,
                 day.get(java.util.Calendar.DAY_OF_MONTH), prayerCfg.prayerLatitude, prayerCfg.prayerLongitude,
-                prayerCfg.prayerIhtiyati, zone);
+                prayerCfg.prayerAdjust, zone);
     }
 
     /** Shows the Wi-Fi network name on the button when we can read it, otherwise the connection type. */
