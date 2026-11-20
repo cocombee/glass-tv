@@ -276,6 +276,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         ambient = findViewById(R.id.ambient);
         Backdrop.setWorker(wallDecoder, handler);
         heroShelf = findViewById(R.id.heroShelf);
+        // show_place_info off: the picture alone; every fade below then runs on a view that is never drawn.
+        if (!cfg.showPlaceInfo) heroShelf.setVisibility(View.GONE);
         heroName = findViewById(R.id.heroName);
         heroDesc = findViewById(R.id.heroDesc);
         heroWhere = findViewById(R.id.heroWhere);

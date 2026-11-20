@@ -64,6 +64,8 @@ final class Config {
     final boolean places;
     /** Days between clearing the TV's app caches (see CacheCleaner); 0 never does. */
     final int cacheCleanDays;
+    /** The place's name, country and description above the dock (show_place_info); false keeps only the picture. */
+    final boolean showPlaceInfo;
     /** Prayer times under the clock (prayer_times, with prayer_latitude and prayer_longitude); see PrayerTimes. */
     final boolean prayerTimes;
     final double prayerLatitude;
@@ -80,7 +82,7 @@ final class Config {
                    boolean showHomeSettingsShortcut, boolean showNetworkPill, boolean showLiveTv,
                    int backgroundColor,
                    File wallpaper, List<File> wallpapers, long wallpaperIntervalMs,
-                   boolean places, int cacheCleanDays,
+                   boolean places, int cacheCleanDays, boolean showPlaceInfo,
                    boolean prayerTimes, double prayerLatitude, double prayerLongitude, int[] prayerAdjust,
                    boolean overlayApplied) {
         this.dockApps = Collections.unmodifiableList(dockApps);
@@ -105,6 +107,7 @@ final class Config {
         this.wallpaperIntervalMs = wallpaperIntervalMs;
         this.places = places;
         this.cacheCleanDays = cacheCleanDays;
+        this.showPlaceInfo = showPlaceInfo;
         this.prayerTimes = prayerTimes;
         this.prayerLatitude = prayerLatitude;
         this.prayerLongitude = prayerLongitude;
@@ -182,6 +185,7 @@ final class Config {
         boolean places = wallpaperOn && (json == null || bool(json, "places", true));
         int cacheCleanDays = json != null ? integer(json, "cache_clean_days", CacheCleaner.DEFAULT_DAYS, 0, 90)
                 : CacheCleaner.DEFAULT_DAYS;
+        boolean placeInfo = json == null || bool(json, "show_place_info", true);
         // Prayer times need a place: off unless the theme turns them on and gives both coordinates.
         double prayerLat = json != null ? decimal(json, "prayer_latitude", Double.NaN, -66, 66) : Double.NaN;
         double prayerLng = json != null ? decimal(json, "prayer_longitude", Double.NaN, -180, 180) : Double.NaN;
@@ -199,7 +203,7 @@ final class Config {
         return new Config(dock, hidden, liveTv, liveTvAction, panelService, panelAction, inputAction,
                 Math.max(1, columns), Math.max(0, rowsBelow), shamsi, moduleCards, reducedMotion,
                 vpn, homeSettings, networkPill, liveTvRow, background, wallpaper, wallpapers, wallpaperIntervalMs,
-                places, cacheCleanDays, prayer, prayerLat, prayerLng, prayerAdjust, applied);
+                places, cacheCleanDays, placeInfo, prayer, prayerLat, prayerLng, prayerAdjust, applied);
     }
 
     /** Reads and parses the overlay; any problem means "no overlay", never a crash on the home screen. */
